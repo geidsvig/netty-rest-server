@@ -1,0 +1,23 @@
+<configuration>
+
+	<appender name="FILE"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>/logs/netty-rest-server.log</file>
+		<encoder>
+			<pattern>%date [%level] [%logger] %message%n%xException</pattern>
+		</encoder>
+		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+			<level>DEBUG</level>
+		</filter>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>/logs/netty-rest-server-%d{yyyy-MM-dd-HH}.log
+			</fileNamePattern>
+			<maxHistory>24</maxHistory>
+		</rollingPolicy>
+	</appender>
+
+	<root level="DEBUG">
+		<appender-ref ref="FILE" />
+	</root>
+
+</configuration>
