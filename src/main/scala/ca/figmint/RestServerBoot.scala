@@ -8,6 +8,6 @@ class RestServerBoot extends akka.kernel.Bootable {
 	}
 	
 	def shutdown = {
-		ApplicationContext.actorSystem.shutdown()
+		ApplicationContext.restServerSystem.shutdown()
 	}
 }

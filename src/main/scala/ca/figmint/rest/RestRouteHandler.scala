@@ -14,10 +14,9 @@ import org.jboss.netty.util.CharsetUtil
 import akka.actor.ActorRef
 import ca.figmint.netty.RestServerRouteHandlerRequirements
 import ca.figmint.netty.RestServerRouteHandler
-import ca.figmint.netty.RestUtils
 import ca.figmint.rest.service.StatusRequest
 
-abstract class RestRouteHandler extends RestServerRouteHandler with RestUtils {
+abstract class RestRouteHandler extends RestServerRouteHandler {
 	self: RestServerRouteHandlerRequirements =>
 	
 	val apiStatusPath: Regex
@@ -29,6 +28,10 @@ abstract class RestRouteHandler extends RestServerRouteHandler with RestUtils {
 		
 		logger info (method + " " + request.getUri)
 		
+		/*
+		 * case matches for REST methods and regex paths go here.
+		 * requests are delegated to handlers (akka actors).
+		 */
 		(method, decoder.getPath) match {
 			case (HttpMethod.GET, path) if pathMatches(path, apiStatusPath) => {
 				apiHandler ! StatusRequest(ctx, request)

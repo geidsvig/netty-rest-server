@@ -15,33 +15,37 @@ import ca.figmint.rest.RestRouteHandler
 import ca.figmint.rest.service.StatusHandler
 
 object ApplicationContext {
-	val actorSystem = ActorSystem("actorSystem", ConfigFactory.load.getConfig("actorSystem"))
-	val hostname = actorSystem.settings.config.getString("restServer.hostname")
-	val port = actorSystem.settings.config.getInt("restServer.http.port")
-	val logger = actorSystem.log
+	val restServerSystem = ActorSystem("restServerSystem", ConfigFactory.load.getConfig("restServerSystem"))
+	val hostname = restServerSystem.settings.config.getString("restServerSystem.hostname")
+	val port = restServerSystem.settings.config.getInt("restServerSystem.http.port")
+	val logger = restServerSystem.log
 	
 	logger info("Application started.")
 
-	val apiHandler = actorSystem.actorOf(Props[ApplicationAPIHandler], "apiHandler")	
+	val apiHandler = restServerSystem.actorOf(Props[ApplicationAPIHandler], "apiHandler")	
 }
 
 class ApplicationAPIHandler extends StatusHandler {
 	val logger = ApplicationContext.logger
 }
 
-class ApplicationRestServer extends RestServer with RestServerProperties
+class ApplicationRestServer extends RestServer
+	with RestServerProperties
 
-class ApplicationRouteHandler extends RestRouteHandler with RestServerRoutehandlerProperties {
-	 val apiStatusPath = new Regex("""/status""")
-	 val apiHandler = ApplicationContext.apiHandler
+class ApplicationRouteHandler extends RestRouteHandler 
+	with RestServerRoutehandlerProperties {
+	val apiStatusPath = new Regex("""/status""")
+	val apiHandler = ApplicationContext.apiHandler
 }
 
-class ApplicationPipelineFactory extends RestServerPipelineFactory with RestServerPipelineFactoryProperties
+class ApplicationPipelineFactory extends RestServerPipelineFactory
+	with RestServerPipelineFactoryProperties
 
 trait RestServerProperties extends RestServerRequirements {
 	val logger = ApplicationContext.logger
 	val port = ApplicationContext.port
 	val pipelineFactory = new ApplicationPipelineFactory
+	val timeout = 4000L
 } 
 
 trait RestServerPipelineFactoryProperties extends RestServerPipelineFactorRequirements {
