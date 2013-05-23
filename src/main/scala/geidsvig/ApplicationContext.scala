@@ -28,6 +28,13 @@ import geidsvig.netty.socket.comet.CometManagerRequirements
 import akka.event.LoggingAdapter
 import geidsvig.netty.socket.ws.WebSocketSessionHandlerFactory
 import geidsvig.netty.socket.ws.WebSocketManagerRequirements
+import geidsvig.netty.socket.comet.CometHandler
+import geidsvig.netty.socket.comet.CometHandlerRequirements
+import geidsvig.netty.socket.comet.CometResponse
+import geidsvig.netty.socket.comet.CometPacket
+import org.jboss.netty.handler.codec.http.HttpRequest
+import scala.concurrent.duration.Duration
+import java.util.concurrent.TimeUnit
 
 object ApplicationContext {
   val system = ActorSystem("restServerSystem", ConfigFactory.load.getConfig("restServerSystem"))
@@ -72,11 +79,27 @@ trait RestServerProperties extends RestServerRequirements {
 trait RestServerPipelineFactoryProperties extends RestServerPipelineFactorRequirements {
   val logger = ApplicationContext.logger
   val routeHandler = new ApplicationRouteHandler
-  val chunkSize = 16
+  val chunkSize = 1024
+}
+
+trait SimpleCometHandlerDependencies extends CometHandlerRequirements {
+  val receiveTimeout: Long = 30000
+  val responseTimeout: Long = 10000
+}
+
+/** simple comet handler
+ *  should respond with a HttpResponse
+ */
+class SimpleCometHandler extends CometHandler with SimpleCometHandlerDependencies {
+  import scala.concurrent.ExecutionContext.Implicits.global
+  def handleRequest(request: HttpRequest) {
+    // for testing purposes only, respond right away to test long polling connection
+    context.system.scheduler.scheduleOnce(Duration.create(3000, TimeUnit.MILLISECONDS), self, CometResponse(CometPacket(HttpResponseStatus.OK, "mock response")))
+  }
 }
 
 class MockCometHandlerFactory extends CometHandlerFactory {
-  def createCometHandler(): ActorRef = ApplicationContext.voidActor
+  def createCometHandler(): ActorRef = ApplicationContext.system.actorOf(Props[SimpleCometHandler])
 }
 
 trait TestCometManagerDependencies extends CometManagerRequirements {
@@ -91,6 +114,8 @@ class MockCometManager extends CometManager with TestCometManagerDependencies {
 }
 
 class MockWebSocketSessionHandlerFactory extends WebSocketSessionHandlerFactory {
+  // FIXME create a valid websocket session handler
+  // should heartbeat every 5 seconds with a text frame
   def createWebSocketSessionHandler(): ActorRef = ApplicationContext.voidActor
 }
 
@@ -114,8 +139,7 @@ trait RestServerRoutehandlerProperties extends RestRouteHandlerRequirements {
   val instantiationTime = System.currentTimeMillis()
 
   val pathsAndHandlers: Set[RestPathHandler] = Set(
-    RestPathHandler(HttpMethod.GET, new Regex("""/status"""), ApplicationContext.statusHandler)
-  )
+    RestPathHandler(HttpMethod.GET, new Regex("""/status"""), ApplicationContext.statusHandler))
 
   val cometManager: CometManager = new MockCometManager
   val webSocketManager: WebSocketManager = new MockWebSocketManager
