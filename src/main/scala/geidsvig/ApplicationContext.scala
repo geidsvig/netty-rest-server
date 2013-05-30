@@ -60,7 +60,7 @@ class ApplicationRestServer extends RestServer
   with RestServerProperties
 
 class ApplicationRouteHandler extends RestRouteHandler
-  with RestServerRoutehandlerProperties
+  with RestServerRouteHandlerProperties
 
 class ApplicationPipelineFactory extends RestServerPipelineFactory
   with RestServerPipelineFactoryProperties
@@ -93,8 +93,7 @@ trait SimpleCometHandlerDependencies extends CometHandlerRequirements {
 class SimpleCometHandler extends CometHandler with SimpleCometHandlerDependencies {
   import scala.concurrent.ExecutionContext.Implicits.global
   def handleRequest(request: HttpRequest) {
-    // for testing purposes only, respond right away to test long polling connection
-    context.system.scheduler.scheduleOnce(Duration.create(3000, TimeUnit.MILLISECONDS), self, CometResponse(CometPacket(HttpResponseStatus.OK, "mock response")))
+    sendResponse(CometPacket(HttpResponseStatus.OK, "mock response"))
   }
 }
 
@@ -134,7 +133,7 @@ class VoidActor extends Actor with RestUtils {
   def receive = { case _ => {} }
 }
 
-trait RestServerRoutehandlerProperties extends RestRouteHandlerRequirements {
+trait RestServerRouteHandlerProperties extends RestRouteHandlerRequirements {
   val logger = ApplicationContext.logger
   val instantiationTime = System.currentTimeMillis()
 
