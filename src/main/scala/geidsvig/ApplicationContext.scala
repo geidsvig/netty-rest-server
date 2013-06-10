@@ -111,14 +111,28 @@ class MockCometManager extends CometManager with TestCometManagerDependencies {
 }
 
 trait SimpleWebSocketHandlerDependencies extends WebSocketHandlerRequirements {
+  val receiveTimeout: Long = 30000
   val webSocketManager: WebSocketManager = ApplicationContext.webSocketManager
 }
 
 class SimpleWebSocketHandler(uuid: String) extends WebSocketHandler(uuid) with SimpleWebSocketHandlerDependencies {
   import scala.concurrent.ExecutionContext.Implicits.global
-  // TODO heartbeat every 5 seconds with a text frame
+  import scala.concurrent.duration._
+  var heartbeating = false
+  
   def handlePayload(payload: String) {
-    sendResponse("mock response")
+    // dirty test: heartbeat every 5 seconds with a text frame
+    if (payload.equals("HEARTBEAT")) {
+      sendResponse("HEARTBEAT")
+      context.system.scheduler.scheduleOnce(5000 milliseconds, self, WebSocketPayload("HEARTBEAT"))
+    } else {
+      log info(s"got websocket request ${payload}")
+      sendResponse("mock response")
+    }
+    if (!heartbeating) {
+      heartbeating=true
+      context.system.scheduler.scheduleOnce(5000 milliseconds, self, WebSocketPayload("HEARTBEAT"))
+    }
   }
 }
 
