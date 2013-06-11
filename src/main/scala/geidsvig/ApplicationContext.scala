@@ -92,7 +92,7 @@ trait SimpleCometHandlerDependencies extends CometHandlerRequirements {
 class SimpleCometHandler(uuid: String) extends CometHandler(uuid) with SimpleCometHandlerDependencies {
   import scala.concurrent.ExecutionContext.Implicits.global
   def handleRequest(request: HttpRequest) {
-    sendResponse(HttpResponseStatus.OK, "mock response")
+    sendResponse(HttpResponseStatus.OK, """"mock response"""")
   }
 }
 
