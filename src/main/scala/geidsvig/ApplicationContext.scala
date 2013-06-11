@@ -35,6 +35,7 @@ import java.util.concurrent.TimeUnit
 import geidsvig.netty.socket.ws.WebSocketHandlerFactory
 import geidsvig.netty.socket.ws.WebSocketHandler
 import geidsvig.netty.socket.ws.WebSocketHandlerRequirements
+import geidsvig.netty.socket.ws.TextFrameBuilder
 
 object ApplicationContext {
   val system = ActorSystem("restServerSystem", ConfigFactory.load.getConfig("restServerSystem"))
@@ -112,10 +113,11 @@ class MockCometManager extends CometManager with TestCometManagerDependencies {
 
 trait SimpleWebSocketHandlerDependencies extends WebSocketHandlerRequirements {
   val receiveTimeout: Long = 30000
+  val useTLS = false
   val webSocketManager: WebSocketManager = ApplicationContext.webSocketManager
 }
 
-class SimpleWebSocketHandler(uuid: String) extends WebSocketHandler(uuid) with SimpleWebSocketHandlerDependencies {
+class SimpleWebSocketHandler(uuid: String) extends WebSocketHandler(uuid) with SimpleWebSocketHandlerDependencies with TextFrameBuilder {
   import scala.concurrent.ExecutionContext.Implicits.global
   import scala.concurrent.duration._
   var heartbeating = false
@@ -123,11 +125,11 @@ class SimpleWebSocketHandler(uuid: String) extends WebSocketHandler(uuid) with S
   def handlePayload(payload: String) {
     // dirty test: heartbeat every 5 seconds with a text frame
     if (payload.equals("HEARTBEAT")) {
-      sendResponse("HEARTBEAT")
+      sendResponse(EventTextFrame("heartbeat",""""stayin alive|"""").toJson)
       context.system.scheduler.scheduleOnce(5000 milliseconds, self, WebSocketPayload("HEARTBEAT"))
     } else {
       log info(s"got websocket request ${payload}")
-      sendResponse("mock response")
+      sendResponse(ResponseTextFrame(200, """"mock response"""").toJson)
     }
     if (!heartbeating) {
       heartbeating=true
