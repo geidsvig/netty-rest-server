@@ -1,4 +1,4 @@
-netty-rest-server
-==========
+Netty-Rest-Server
+=================
 
-Example Netty Rest server
+This is an example server project using the Netty-Rest library.
